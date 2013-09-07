@@ -1,0 +1,45 @@
+#!/usr/bin/env ruby
+
+def contain(key, file)
+  `grep #{key} #{file}`
+  $?.exitstatus == 0
+end
+
+bashrc = "~/.bashrc"
+
+# 把paas的ruby放到PATH中
+if not contain("RUBY_HOME", bashrc)
+  system <<-END 
+    echo "" >> #{bashrc}
+    echo "RUBY_HOME=\\$HOME/build_dir/target/ruby" >> #{bashrc}
+    echo "PATH=\\$RUBY_HOME/bin:\\$PATH" >> #{bashrc}
+    echo "export PATH" >> #{bashrc}
+  END
+end
+
+# 把paas的bin放到PATH中
+if not contain("PAAS_HOME", bashrc)
+  system <<-END
+    echo "" >> #{bashrc}
+    echo "PAAS_HOME=\\$HOME/paas-release.git" >> #{bashrc}
+    echo "PATH=\\$PAAS_HOME/bin:\\$PATH" >> #{bashrc}
+    echo "export PATH" >> #{bashrc}
+  END
+end
+
+if not contain("CFCLIENT_HOME", bashrc)
+  system <<-END
+    echo "" >> #{bashrc}
+    echo "CFCLIENT_HOME=\\$HOME/build_dir/target/cf" >> #{bashrc}
+    echo "PATH=\\$CFCLIENT_HOME/bin:\\$PATH" >> #{bashrc}
+    echo "export PATH" >> #{bashrc}
+  END
+end
+
+# 设置cf必用的域名放到hosts中
+hosts = "/etc/hosts"
+if not contain('api2.vcap.me', hosts)
+  system <<-END 
+    sudo sh -c "echo '127.0.0.1 api.vcap.me api2.vcap.me uaa.vcap.me' >> #{hosts}"
+  END
+end

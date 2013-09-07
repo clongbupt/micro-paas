@@ -1,0 +1,82 @@
+#!/usr/bin/env ruby
+# coding : UTF-8
+
+require 'pathname'
+
+$HOME = Pathname.new(ENV['HOME'])
+$PAAS_HOME = Pathname.new(File.dirname(__FILE__)).realpath.parent
+$VCAP_HOME = $HOME + 'vcap'
+
+$LOAD_PATH.unshift($PAAS_HOME + 'lib')
+
+require 'paas/build'
+require 'paas/shell'
+PaaS::Shell.exit_when_failed = true
+
+def build_package(package_name)
+  load "#{$PAAS_HOME}/packages/#{package_name}/build.rb"
+end
+
+require 'optparse'
+
+args = ARGV.dup
+opts_parser = OptionParser.new do |opts|
+  opts.banner = "Usage: paas-build [options] all|<package_name>"
+
+  opts.separator ""
+
+  opts.on("-H", "--home", "build at home(using www address)") { $at_place = :home }
+  opts.on("-h", "--help", "Show this message") { puts opts; exit }
+  opts.on("-R", "--rebuild-rootfs", "recompile rootfs, not use binary package at file.ebcloud.com") { $rebuild_rootfs = true }
+end
+
+args = opts_parser.parse!(args)
+if args.size == 0
+  puts opts_parser 
+  exit 
+end
+
+package_name = args[0]
+
+begin
+  if package_name == 'all'
+    packages = [
+      "ruby",
+      "nats",
+      "router",
+      "java",
+      "maven",
+      "maven_uaa_repository",
+      "postgres",
+      "uaa",
+      "cloud_controller_ng",
+      "health_manager",
+      "warden",
+      "rootfs",
+      "dea_ng",
+      "buildpack_cache",
+      "mysql",
+      "redis",
+      "mysql_service",
+      "cf"
+    ]
+
+    packages.each do |package|
+      build_package(package)
+    end
+
+  else
+    package_name = 'cloud_controller_ng' if package_name == 'cc'
+    package_name = 'health_manager' if package_name == 'hm'
+
+    build_package(package_name)
+  end
+ensure
+  puts "======= build report ======="
+  sum = 0
+  $build_report.each do |name, interval, report|
+    sum += interval
+    puts report
+  end  
+  puts "---> total used use #{(sum/60).to_i} minutes #{(sum % 60).to_i} seconds"
+end

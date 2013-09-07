@@ -1,0 +1,13 @@
+#!/bin/bash
+
+sudo sed -i 's/us.archive.ubuntu.com/mirrors.sohu.com/g' /etc/apt/sources.list
+
+sudo apt-get update
+
+# 这些是编译的时候需要用的
+sudo apt-get -y install curl  # 用于下载软件到本地 
+sudo apt-get -y install git   # 用于从版本库中下载软件
+sudo apt-get -y install sed   # 用于编译过程中中修改源码或者配置文件
+
+# 这些是运行的时候需要用的
+sudo apt-get -y install zip   # cloud_controller需要用到

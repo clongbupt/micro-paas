@@ -1,0 +1,47 @@
+---
+capacity: 200
+plan: free
+local_db: sqlite3:<%= vcap_sys_data %>/mysql_node.db
+
+base_dir: <%= release_dir + 'mysql' %>
+mysqldump_bin: mysqldump
+mysql_bin: mysql
+
+database_lock_file: <%= vcap_sys_dir%>/run/mysql/LOCK
+ip_route: <%= local_ip %>   # node里面有这个字段吗？干什么用的？
+mbus: nats://<%= local_ip %>:4222
+index: 0
+logging:
+  level: debug
+  file: <%= log_file %>
+pid: <%= pid_file %>
+
+node_id: mysql_node_free_1
+supported_versions: ["5.5"]
+default_version: "5.5"
+
+gzip_bin: gzip
+max_db_size: 20
+max_long_query: 3
+max_long_tx: 30
+kill_long_tx: true
+max_user_conns: 20
+mysql:
+  "5.5":
+    host: <%= local_ip %>  # 这个字段不能设为localhost或者127.0.0.1，否则warden中的app无法连接
+    port: 3306
+    socket: <%= vcap_sys_socket + 'mysql.sock' %>
+    user: root
+    pass: mysql 
+    mysqldump_bin: <%= release_dir + 'mysql' + 'bin' + 'mysqldump' %> 
+    mysql_bin: <%= release_dir + 'mysql' + 'bin' + 'mysql' %>
+connection_pool_size: 
+  min: 5
+  max: 10
+# connection timeout for all management mysql connection
+connection_wait_timeout: 10
+
+# z_interval: 30
+# max_nats_payload: 1048576
+# fqdn_hosts: false
+# op_time_limit: 6

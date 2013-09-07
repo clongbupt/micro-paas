@@ -1,0 +1,69 @@
+#!/bin/bash 
+
+# 找到当前路径，并设置PAAS_HOME
+
+## resolve links - $0 may be a link to  home
+PRG=$0
+progname=`basename "$0"`
+
+while [ -h "$PRG" ] ; do
+  ls=`ls -ld "$PRG"`
+  link=`expr "$ls" : '.*-> \(.*\)$'`
+  if expr "$link" : '.*/.*' > /dev/null; then
+    if expr "$link" : '/' > /dev/null; then
+      PRG="$link"
+    else
+      PRG="`dirname ${PRG}`/${link}"
+    fi
+  else
+    PRG="`dirname $PRG`/$link"
+  fi
+done
+
+PAAS_HOME_1=`dirname "$PRG"`           # the ./bin dir
+if [ $PAAS_HOME_1 = '.' ] ; then
+  cwd=`pwd`
+  PAAS_HOME=`dirname $cwd`
+else
+  PAAS_HOME=`dirname "$PAAS_HOME_1"`  # the . dir
+fi
+
+# 运行pre-build
+$PAAS_HOME/bin/pre-build
+
+#####################################
+#
+# 以下安装paas绿色版运行需要的基础软件包
+#
+#####################################
+
+# ruby1.9.3的yaml库需要安装
+sudo apt-get -y install libyaml-0-2
+
+#
+# cloud_controller_ng需要的
+#
+# 用于cc的nokogiri
+sudo apt-get -y install libxml2-dev libxslt-dev
+# 用于rake db:migration的时候需要 
+sudo apt-get -y install libmysqlclient-dev 
+# cc在处理push的时候需要（运行时）
+sudo apt-get -y install zip
+
+# warden运行时需要，否则创建容器可能不成功，并导致dea退出
+sudo apt-get -y install quota apparmor-profiles
+
+# warden运行时需要， 否则无法在warden容器中在tmp目录下创建目录，导致staging失败
+sudo chown -Rf root:root $HOME/build_dir/target/rootfs
+sudo chmod ug+rwx $HOME/build_dir/target/rootfs/tmp
+sudo chmod o+rwt $HOME/build_dir/target/rootfs/tmp 
+
+#####################################
+#
+# 以下主要是通过cf来安装mysql的service的token(必须在paas启动时才能调用)
+#
+#####################################
+
+$PAAS_HOME/bin/paas start
+$PAAS_HOME/bin/paas init
+$PAAS_HOME/bin/paas stop

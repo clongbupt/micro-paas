@@ -1,0 +1,30 @@
+---
+status:
+  port: 8082
+  user: router
+  pass: router
+
+nats:
+  host: <%= local_ip %>
+  port: 4222
+  user: 
+  pass: 
+
+logging:
+  file: <%= log_file %>
+  syslog: 
+  level: debug
+
+port: 80
+index: 0
+pidfile: <%= pid_file %>
+go_max_procs: 8
+trace_key: router0
+access_log: <%= access_log_file %>
+
+# router启动后, 会等待下面参数时间(秒)再绑定port端口，这个值默认是30s
+publish_start_message_interval: 1  
+
+prune_stale_droplets_interval: 30
+droplet_stale_threshold: 120
+publish_active_apps_interval: 0 # 0 means disabled

@@ -1,0 +1,65 @@
+---
+cloud_controller_uri: http://<%= local_ip%>:8181
+service:
+  name: mysql
+  unique_id: "92a06847-9446-407f-8aaa-a6f20c1d2cdc"
+  version: "5.5"
+  description: 'MySQL database'
+  provider: core
+  provider_name: 'Core'
+  version_aliases:
+    current: "5.5"
+  plans: 
+    free:
+      unique_id: free_1
+      description: free_plan_1
+      free: true
+  default_plan: free
+  cf_plan_id: 
+    free: 
+  tags: ['relational']
+  timeout: 10
+  supported_versions: ["5.5"]
+ip_route: <%= local_ip %>
+#proxy:
+#   host: proxy
+#   port: 8080x
+#   keepalive: true
+index: 0
+token: "0xdeadbeef"
+logging:
+  level: debug
+  file: <%= log_file %>
+mbus: nats://<%= local_ip %>:4222
+pid: <%= pid_file %>
+node_timeout: 2
+resque:
+  host: localhost
+  port: 5454
+download_url_template: http://dl.vcap.me/serialized/%{service}/%{name}/snapshots/%{snapshot_id}?token=%{token}
+
+cc_api_version: v2
+service_auth_tokens: 
+   mysql_core: "0xdeadbeef" 
+
+uaa_client_id: cf
+uaa_endpoint: http://<%= local_ip %>:8080/uaa 
+uaa_client_auth_credentials: 
+   username: admin
+   password: admin 
+
+plan_management:
+  plans:
+    free:
+      low_water: 10
+      high_water: 180
+      lifecycle:
+        snapshot:
+          quota: 5
+        serialization: enable
+        job: enable
+      #allow_over_provisioning: false
+
+# z_interval: 30
+# check_orphan_interval: 3600
+# double_check_orphan_interval: 300

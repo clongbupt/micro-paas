@@ -1,0 +1,56 @@
+#!/usr/bin/env ruby
+# coding : UTF-8
+
+require 'pathname'
+
+$HOME = Pathname.new(ENV['HOME'])
+$PAAS_HOME = Pathname.new(File.dirname(__FILE__)).realpath.parent
+$VCAP_HOME = $HOME + 'vcap'
+
+$LOAD_PATH.unshift($PAAS_HOME + 'lib')
+
+require 'paas/control'
+require 'paas/shell'
+PaaS::Shell.exit_when_failed = false
+
+def execute_job_command(job_name, command)
+  load "#{$PAAS_HOME}/jobs/#{job_name}/control.rb"
+  job_class = PaaS::Control.find(job_name)
+  job = job_class.new
+
+  job.send command.to_sym
+end
+
+job_name = ARGV[0]
+job_name = 'cloud_controller_ng' if job_name == 'cc'
+
+components = ['postgres', 'mysql', 'redis', 'nats', 'router', 'uaa', 
+  'cloud_controller_ng', 'warden', 'dea_ng', 'directory_server', 
+  'health_manager', 'mysql_gateway', 'mysql_node']
+
+case job_name
+when 'start'
+  # paas整体启动
+  components.each do |c|
+    system "#{$PAAS_HOME}/bin/paas #{c} start"
+    #execute_job_command(c, 'start')
+  end
+when 'stop'
+  components.reverse.each do |c|
+    puts c
+    execute_job_command(c, 'stop')
+  end
+when 'status'
+  components.each do |c|
+    execute_job_command(c, 'status')
+  end
+when 'init'
+  system "cf target api2.vcap.me"  
+  system "cf login --username admin --password admin"  
+  system "cf create-service-auth-token --label mysql --provider core --token '0xdeadbeef'"  
+when 'version'
+  puts '0.1.2'
+else
+  # 管理单个组件
+  execute_job_command(job_name, ARGV[1])
+end

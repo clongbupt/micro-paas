@@ -1,0 +1,85 @@
+# See src/lib/dea/config.rb for optional config values.
+
+# Base directory for dea, application directories, dea temp files, etc. are all relative to this.
+base_dir: /tmp/dea_ng
+
+logging:
+  level: debug
+
+local_route: <%= local_ip %>
+
+resources:
+  memory_mb: 2048
+  memory_overcommit_factor: 2
+  disk_mb: 2048
+  disk_overcommit_factor: 2
+
+# The this flag determines whether or not this DEA should only host
+# production apps. (default: false)
+only_production_apps: false
+
+nats_uri: nats://<%= local_ip %>:4222/
+
+pid_filename: <%= pid_file %>
+
+warden_socket: /tmp/warden.sock
+
+evacuation_delay_secs: 5
+
+index: 0
+
+domain: vcap.me
+
+staging:
+  enabled: true
+  platform_config:
+    cache: /var/vcap/data/stager/package_cache/ruby
+  environment:
+#    PATH: /usr/local/ruby/bin
+#    PATH: <%= ruby_path %>
+    BUILDPACK_CACHE: /buildpack_cache
+  memory_limit_mb: 1024
+  disk_limit_mb: 2048
+  max_staging_duration: 900 # 15 minutes
+
+#
+# 将release_dir下的buildpack_cache[src_path]映射到warden的/buildpack_cache[dst_path]目录下
+# 这个目录主要包括buildpack运行时需要的第三方package，比如ruby虚拟机，jdk等。
+# 本地bundlepack_cache的引入大大加快的stager的速度
+# 为达到这个效果，dst_path必须和上面的BUILDPACK_CACHE相同才能起作用
+#
+bind_mounts:
+  - src_path: <%= release_dir + 'buildpack_cache' %>
+    dst_path: /buildpack_cache
+    mode: ro
+
+# 
+# dea_ruby主要指warden中的ruby可执行文件路径
+# 目前rootfs里面的ruby使用的是通过apt-get安装的ruby1.9.3
+#
+dea_ruby: <%= dea_ruby %>
+
+# For Go-based directory server
+directory_server:
+  v1_port: 4385
+  v2_port: 5678
+  file_api_port: 1234
+  streaming_timeout: 10
+  logging:
+    level: info
+
+stacks:
+  - lucid64
+
+# Hook scripts for droplet start/stop
+# hooks:
+#   before_start: path/to/script
+#   after_start: path/to/script
+#   before_stop: path/to/script
+#   after_stop: path/to/script
+
+cc_partition: ng
+
+bulk_api:
+  auth_user: bulk_user
+  auth_password: bulk_password
